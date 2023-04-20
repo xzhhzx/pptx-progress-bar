@@ -1,0 +1,9 @@
+progress_bar:
+  position: down      # down/up/left/right
+  thickness: 0.3
+  colors: [540d6e, ee4266, ffd23f, 3bceac]  # available colors for each chapter segment
+background:
+  if_display: true
+  relative_thickness_ratio: 0.333
+  color: D8E1E9
+auto-detection: {}

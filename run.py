@@ -1,14 +1,19 @@
-import collections.abc  # (workaround for python 3.10. See more: https://stackoverflow.com/questions/69468128/fail-attributeerror-module-collections-has-no-attribute-container)
+import yaml
 from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.util import Inches
 from pptx.dml.color import RGBColor
 
+# Fixed params
 PROGRESS_BAR_TAG = "progress_bar_tag"
 CHAPTER_SLIDE_LAYOUT_NAME = "节标题"
-CHAPTER_COLORS = ['540d6e', 'ee4266', 'ffd23f', '3bceac']
-PROGRESS_BAR_HEIGHT = Inches(0.2)
 IS_DEBUG = True
+
+# Adjustable params
+config = yaml.safe_load(open('./config.yaml'))
+print(config)
+progress_bar_thickness = Inches(config['progress_bar']['thickness'])
+# exit(0)
 
 class ChapterColorsFactory(object):
     """ This class is for retrieving chapter colors. """
@@ -61,7 +66,7 @@ def appendColoredRectangleToSlide(slideShapes, x, y, w, h, name, chapterColorsFa
 
 
 def addAllProgressBars(prs, chapter_tuple_list):
-    chapterColorsFactory = ChapterColorsFactory(CHAPTER_COLORS)
+    chapterColorsFactory = ChapterColorsFactory(config['progress_bar']['colors'])
     ptr = 0
 
     # Iterate through slides
@@ -86,9 +91,9 @@ def addAllProgressBars(prs, chapter_tuple_list):
             appendColoredRectangleToSlide(
                 slide.shapes,
                 prs.slide_width * offset_ratio,
-                prs.slide_height - PROGRESS_BAR_HEIGHT,
+                prs.slide_height - progress_bar_thickness,
                 prs.slide_width * delta_ratio,
-                PROGRESS_BAR_HEIGHT,
+                progress_bar_thickness,
                 PROGRESS_BAR_TAG + '_fore_' + str(i), # tag a name for the shape
                 chapterColorsFactory
             )
@@ -97,13 +102,12 @@ def addAllProgressBars(prs, chapter_tuple_list):
         end_page = chapter_tuple_list[ptr][0]
         offset_ratio = end_page / len(prs.slides)
         delta_ratio = (current_page - end_page + 1) / len(prs.slides)
-        # Append rectangle to the tail of the shape tree
         appendColoredRectangleToSlide(
             slide.shapes,
             prs.slide_width * offset_ratio,
-            prs.slide_height - PROGRESS_BAR_HEIGHT,
+            prs.slide_height - progress_bar_thickness,
             prs.slide_width * delta_ratio,
-            PROGRESS_BAR_HEIGHT,
+            progress_bar_thickness,
             PROGRESS_BAR_TAG + '_fore_current', # tag a name for the shape
             chapterColorsFactory
         )
@@ -112,17 +116,18 @@ def addAllProgressBars(prs, chapter_tuple_list):
         # 3. Add progress bars background
         offset_ratio = (current_page + 1) / len(prs.slides)
         delta_ratio = 1 - offset_ratio
-        background_bar_height = PROGRESS_BAR_HEIGHT / 3
+        background_bar_thickness = progress_bar_thickness * config['background']['relative_thickness_ratio']
         appendColoredRectangleToSlide(
             slide.shapes,
             prs.slide_width * offset_ratio,
-            prs.slide_height - PROGRESS_BAR_HEIGHT / 2 - background_bar_height / 2,
+            prs.slide_height - progress_bar_thickness / 2 - background_bar_thickness / 2,
             prs.slide_width * delta_ratio,
-            background_bar_height,
+            background_bar_thickness,
             PROGRESS_BAR_TAG + '_back', # tag a name for the shape
-            ChapterColorsFactory(['D8E1E9'])
+            ChapterColorsFactory([config['background']['color']])
         )
 
+        # Reset color after each slide
         chapterColorsFactory.resetColor()
 
 def removeAllProgressBars(slides):
@@ -137,7 +142,7 @@ if __name__ == '__main__':
     path_to_presentation = "./test.pptx"
     prs = Presentation(path_to_presentation)
 
-    # Remove progress bars
+    # Clear all progress bars
     removeAllProgressBars(prs.slides)
 
     # Pre-calculate all chapter segments
