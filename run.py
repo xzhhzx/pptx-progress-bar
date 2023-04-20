@@ -12,12 +12,9 @@ IS_DEBUG = True
 
 class ChapterColorsFactory(object):
     """ This class is for retrieving chapter colors. """
-
-    # Available colors (in hex format) for different chapters
-    colors = CHAPTER_COLORS
-
-    def __init__(self):
+    def __init__(self, colors):
         self.ptr = 0
+        self.colors = colors    # available colors (in hex format) for different chapters
 
     def _convert_hex_to_rgb(self, hex_color):
         return (
@@ -27,10 +24,10 @@ class ChapterColorsFactory(object):
         )
 
     def getCurrentColor(self):
-        return RGBColor(*self._convert_hex_to_rgb(ChapterColorsFactory.colors[self.ptr]))
+        return RGBColor(*self._convert_hex_to_rgb(self.colors[self.ptr]))
 
     def changeToNextColor(self):
-        self.ptr = (self.ptr + 1) % len(ChapterColorsFactory.colors)
+        self.ptr = (self.ptr + 1) % len(self.colors)
 
     def resetColor(self):
         self.ptr = 0
@@ -58,14 +55,13 @@ def appendColoredRectangleToSlide(slideShapes, x, y, w, h, name, chapterColorsFa
     progress_bar = slideShapes.add_shape(MSO_SHAPE.RECTANGLE, x, y, w, h)
     progress_bar.name = name # tag a name for the shape
     progress_bar.fill.solid()
-    progress_bar.line.fill.solid()
     progress_bar.fill.fore_color.rgb = chapterColorsFactory.getCurrentColor()
-    progress_bar.line.color.rgb = chapterColorsFactory.getCurrentColor()
+    progress_bar.line.fill.background()     # set line to transparent
     chapterColorsFactory.changeToNextColor()
 
 
 def addAllProgressBars(prs, chapter_tuple_list):
-    chapterColorsFactory = ChapterColorsFactory()
+    chapterColorsFactory = ChapterColorsFactory(CHAPTER_COLORS)
     ptr = 0
 
     # Iterate through slides
@@ -86,7 +82,7 @@ def addAllProgressBars(prs, chapter_tuple_list):
             offset_ratio = start_page / len(prs.slides)
             if IS_DEBUG: print("\t====== start_page=", start_page, ", end_page=", end_page)
 
-            # Append rectangle to the tail of the tree
+            # Append rectangle to the tail of the shape tree
             appendColoredRectangleToSlide(
                 slide.shapes,
                 prs.slide_width * offset_ratio,
@@ -101,7 +97,7 @@ def addAllProgressBars(prs, chapter_tuple_list):
         end_page = chapter_tuple_list[ptr][0]
         offset_ratio = end_page / len(prs.slides)
         delta_ratio = (current_page - end_page + 1) / len(prs.slides)
-        # Append rectangle to the tail of the tree
+        # Append rectangle to the tail of the shape tree
         appendColoredRectangleToSlide(
             slide.shapes,
             prs.slide_width * offset_ratio,
@@ -113,16 +109,19 @@ def addAllProgressBars(prs, chapter_tuple_list):
         )
         if IS_DEBUG: print("Draw rect: ", prs.slide_width * offset_ratio, ", ", prs.slide_width * delta_ratio)
 
-        # # Add background
-        # slide.shapes.add_shape(
-        #     MSO_SHAPE.RECTANGLE,
-        #     prs.slide_width * ratio,
-        #     prs.slide_height - PROGRESS_BAR_HEIGHT,
-        #     prs.slide_width * (1 - ratio),
-        #     PROGRESS_BAR_HEIGHT
-        # )
-        # progress_bar_back = slide.shapes[-1]
-        # progress_bar_back.name = PROGRESS_BAR_TAG + '_back' # tag a name for the shape
+        # 3. Add progress bars background
+        offset_ratio = (current_page + 1) / len(prs.slides)
+        delta_ratio = 1 - offset_ratio
+        background_bar_height = PROGRESS_BAR_HEIGHT / 3
+        appendColoredRectangleToSlide(
+            slide.shapes,
+            prs.slide_width * offset_ratio,
+            prs.slide_height - PROGRESS_BAR_HEIGHT / 2 - background_bar_height / 2,
+            prs.slide_width * delta_ratio,
+            background_bar_height,
+            PROGRESS_BAR_TAG + '_back', # tag a name for the shape
+            ChapterColorsFactory(['D8E1E9'])
+        )
 
         chapterColorsFactory.resetColor()
 
