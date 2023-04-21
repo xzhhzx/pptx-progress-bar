@@ -6,4 +6,5 @@ background:
   if_display: true
   relative_thickness_ratio: 0.333
   color: D8E1E9
+text: {}
 auto-detection: {}
