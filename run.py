@@ -1,14 +1,10 @@
 import yaml
 from pptx import Presentation
-from pptx.enum.shapes import MSO_SHAPE
-from pptx.util import Inches
-from pptx.dml.color import RGBColor
 
-from progress_bar import ProgressBar
-# from utils import *
+from progress_bar import ProgressBarTemplate
 
-IS_DEBUG = True
 
+# TODO: retrieve params from config.yaml
 """ Adjustable params """
 config = yaml.safe_load(open('./config.yaml'))
 print(config)
@@ -19,18 +15,26 @@ if __name__ == '__main__':
     # Instantiate a Presentation
     path_to_presentation = "./test.pptx"
     prs = Presentation(path_to_presentation)
-    pb = ProgressBar.ProgressBarBuilder(prs) \
-        .setPosition('down') \
-        .setColors(['c93456', '18c9a0', 'a2418a']) \
+
+    # Create a ProgressBarTemplate
+    pbt = ProgressBarTemplate.ProgressBarTemplateBuilder(prs) \
+        .setPosition('bottom') \
         .setThickness(0.2) \
+        .setColors(['c93456', '18c9a0', 'a2418a']) \
+        .setBgColor('D8E1E9') \
+        .setBgThicknessRatio(0.75) \
         .build()
-        # .setShapeName(PROGRESS_BAR_TAG) \ # TODO: add param
+        # TODO: add more configurable params
+        # .setPageMarginXY(0.15, 0.25) \
+        # .setChapterBarShape('rounded_rectangle')
+        # .setIfAddText(True)
+
 
     # Clear all progress bars
-    pb.removeAllBars()
+    pbt.removeAllBars()
 
     # Add progress bar
-    pb.drawAllBars()
+    pbt.drawAllBars()
 
     prs.save(path_to_presentation)
     print(f"Run successful! File saved to {path_to_presentation} !")

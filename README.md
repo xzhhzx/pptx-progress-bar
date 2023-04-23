@@ -1,8 +1,12 @@
 # Some design facts
 1. Prefer YAML over JSON for config file (*implemented in v2.3*):
-* YAML looks cleaner
-* YAML may add comment, which is more user-friendly for config adjustments
-2. Use of design pattern (TODO)
+
+   * YAML looks cleaner
+
+   * YAML may add comment, which is more user-friendly for config adjustments
+
+2. Use of design pattern
+
    * Builder pattern
 
 
@@ -36,11 +40,11 @@
    	(W-th, h0+h1, th, h2),
    	...
    ]
-   
+
    (Note: `th` is the thickness of the progress bar)
    (Note: `W` is the width (horizontal direction) of the canvas)
    (Note: `H` is the height (vertical direction) of the canvas)
    (Note: `w0`/`w1` is the length of an segmentation when the progress bar is horizontally positioned)
    (Note: `h0`/`h1` is the length of an segmentation when the progress bar is vertically positioned)
-   
+
    ```
