@@ -48,3 +48,5 @@
    (Note: `h0`/`h1` is the length of an segmentation when the progress bar is vertically positioned)
 
    ```
+
+4. Input validation in constructor while input anti-overwrite in builder

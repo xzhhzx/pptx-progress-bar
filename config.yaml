@@ -1,10 +1,10 @@
+presentation_path: ./test.pptx
 progress_bar:
-  position: down      # down/up/left/right
-  thickness: 0.3
-  colors: [540d6e, ee4266, ffd23f, 3bceac]  # available colors for each chapter segment
-background:
-  if_display: true
-  relative_thickness_ratio: 0.333
-  color: D8E1E9
-text: {}
-auto-detection: {}
+  position: bottom      # bottom/top/left/right
+  finished_part:
+    thickness: 0.25   # the thickness of the progress bar in inches
+    colors: [540d6e, ee4266, ffd23f, 3bceac]  # available colors for each chapter segment
+  unfinished_part:
+    relative_thickness_ratio: 0.6587    # ratio relative to finished_part.thickness (should be > 0)
+    color: e9edc9   # color for unfinished part on the progress bar
+  text: {}

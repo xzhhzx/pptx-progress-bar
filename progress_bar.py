@@ -47,7 +47,6 @@ class ProgressBarTemplate(object):
         # Progress bar properties
         self.position = builder.position
         self.thk = builder.thk
-        # self.colors = builder.colors
         self.chapterColorsManager = builder.chapterColorsManager
         self.chapterColorsManagerBg = builder.chapterColorsManagerBg
         self.unit_size = builder.unit_size
@@ -167,7 +166,10 @@ class ProgressBarTemplate(object):
             self.W = presentation.slide_width
             self.H = presentation.slide_height
             self.chapter_tuple_list = self._calculateChapterSegments()
-            print(f"Chapters: {self.chapter_tuple_list}")
+
+            print('============= AUTO-DETECTED CHAPTERS =============')
+            for i in self.chapter_tuple_list:
+                print(i)
 
             # Optional params
             self.position = 'bottom'
@@ -188,8 +190,14 @@ class ProgressBarTemplate(object):
             chapter_tuple_list.append((len(self.prs.slides), "end")) # (end_page)
             return chapter_tuple_list
 
+        def _checkNone(self, attr):
+            return attr is None
+
         # TODOs: add validation check
         def setPosition(self, position):
+            # reject setting if input is none (TODO: is this a good design?)
+            if self._checkNone(position):
+                return self
             if position not in ('top', 'bottom', 'left', 'right'):
                 raise Exception("Input position should be one of: ('top', 'bottom', 'left', 'right')")
             self.position = position
