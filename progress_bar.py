@@ -4,6 +4,12 @@ from pptx.enum.shapes import MSO_SHAPE
 from pptx.util import Inches
 from pptx.dml.color import RGBColor
 
+""" Default params """
+# Tag name for progress bar, which is convenient for searching shapes on a slide by name
+PROGRESS_BAR_TAG = "progress_bar_tag"
+# The fixed name for the chapter slide of Microsoft Powerpoint (in Chinese).
+CHAPTER_SLIDE_LAYOUT_NAME = "节标题"
+
 class ChapterColorsFactory(object):
     """ This class is for retrieving chapter colors. """
     def __init__(self, colors):
@@ -28,7 +34,10 @@ class ChapterColorsFactory(object):
 
 
 class ProgressBar(object):
-    """docstring for ."""
+    """ A class that represents the progress bar template that can be drawn on
+        a PPT slide. To use this, first instantiate with the builder. Then use
+        the method *drawBarOnPage()* to draw the progress bar on a certain page.
+    """
     def __init__(self, builder):
         self.position = builder.position
         self.thk = builder.thk
@@ -40,13 +49,14 @@ class ProgressBar(object):
         self.unit_size = builder.unit_size
         self.W = builder.W
         self.H = builder.H
+        self.prs = builder.prs
 
         self.chapter_tuple_list = builder.chapter_tuple_list
         self.chapter_start_pages = [i[0] for i in self.chapter_tuple_list]
         self.num_pages_of_chapters = [i[0] - i[1] for i in zip(self.chapter_start_pages[1:], self.chapter_start_pages[:-1])]
 
-    def _addRect(self, shapes, offset, delta, chapterColorsFactory):
-        """ Add a rectangle for a chapter """
+    def _appendRect(self, shapes, offset, delta, chapterColorsFactory):
+        """ Append a rectangle to the progress bar """
         if self.position in ['down', 'up']:
             rect = shapes.add_shape(
                 MSO_SHAPE.RECTANGLE,
@@ -69,42 +79,59 @@ class ProgressBar(object):
         chapterColorsFactory.changeToNextColor()
         return rect
 
-    def drawBarOnPage(self, page, slide):
-        page += 1 # TODO: this is ugly. Try fixing the offset issue with another method
+    def _drawBarOnPage(self, page):
+        """ Draw a progress bar for a certain page on slide """
+        slide = self.prs.slides[page]
         group_shape = slide.shapes.add_group_shape([])
-        group_shape.name = 'progress_bar_tag' # tag a name for the shape
+        group_shape.name = PROGRESS_BAR_TAG  # tag a name for the shape
         ptr = 0
         offset = 0
+        page += 1 # TODO: this is ugly. Try fixing the offset issue with an alternative method
 
         # 1.Previous full chapters
         while self.chapter_tuple_list[ptr+1][0] < page:
             delta = self.unit_size * self.num_pages_of_chapters[ptr]
-            self._addRect(group_shape.shapes, offset, delta, self.chapterColorsFactory)
+            self._appendRect(group_shape.shapes, offset, delta, self.chapterColorsFactory)
             offset += delta
             ptr += 1
 
         # 2.Current chapter
         delta_pages = page - self.chapter_tuple_list[ptr][0]
         delta = self.unit_size * delta_pages
-        self._addRect(group_shape.shapes, offset, delta, self.chapterColorsFactory)
+        self._appendRect(group_shape.shapes, offset, delta, self.chapterColorsFactory)
         offset += delta
 
         # 3.Remaining all pages
         total_pages = self.chapter_start_pages[-1]
         delta = self.unit_size * (total_pages - page)
-        self._addRect(group_shape.shapes, offset, delta, self.chapterColorsFactoryBG)
+        self._appendRect(group_shape.shapes, offset, delta, self.chapterColorsFactoryBG)
         offset += delta
 
         self.chapterColorsFactory.resetColor()
         self.chapterColorsFactoryBG.resetColor()
 
+    def drawAllBars(self):
+        """ Draw all progress bars for the whole presentation """
+        for i in range(len(self.prs.slides)):
+            self._drawBarOnPage(i)
+
+    def removeAllBars(self):
+        """ Remove all progress bars for the whole presentation """
+        for slide in self.prs.slides:
+            # Search shape named with "progress_bar" and remove
+            for shape in slide.shapes:
+                if shape.name.startswith(PROGRESS_BAR_TAG):
+                    slide.shapes.element.remove(shape.element)
+
     class ProgressBarBuilder(object):
         """ Builder pattern"""
-        def __init__(self, W, H, chapter_tuple_list):
+        def __init__(self, presentation):
             # Required params
-            self.W = W
-            self.H = H
-            self.chapter_tuple_list = chapter_tuple_list
+            self.prs = presentation
+            self.W = presentation.slide_width
+            self.H = presentation.slide_height
+            self.chapter_tuple_list = self._calculateChapterSegments()
+            print(self.chapter_tuple_list)
 
             # Optional params
             self.position = 'down'
@@ -113,7 +140,19 @@ class ProgressBar(object):
             self.chapterColorsFactoryBG = ChapterColorsFactory(["D8E1E9"])
             self.span = 'TODO'
 
+        def _calculateChapterSegments(self):
+            """ Pre-calculate all chapter segments.
+                FORMAT: each tuple represents (<chapter_start_page_index>, <chapter_name>)
+            """
+            chapter_tuple_list = [(0, "start")] # (start page)
+            for idx, slide in enumerate(self.prs.slides):
+                if slide.slide_layout.name == CHAPTER_SLIDE_LAYOUT_NAME:
+                    chapter_tuple_list.append((idx, slide.shapes[0].text))
+            chapter_tuple_list.append((len(self.prs.slides), "end")) # (end_page)
+            return chapter_tuple_list
+
         def setPosition(self, position):
+            # TODOs: add validation check
             self.position = position
             return self
 
@@ -143,9 +182,3 @@ class ProgressBar(object):
             elif self.position in ['right', 'left']:
                 self.unit_size = self.H / self.num_pages
             return ProgressBar(self)
-
-if __name__ == '__main__':
-    my_rect = ProgressBar.ProgressBarBuilder(300, 200, [0, 4, 9, 10]) \
-        .setPosition('down') \
-        .setThickness(0.3) \
-        .build()
