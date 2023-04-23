@@ -1,9 +1,54 @@
-# Some design facts
+## Introduction
+
+This repo contains easy-to-use Python scripts to **generate progress bars** flexibly for your PowerPoint presentation, in order to give the audience a good indication of the presentation structure. You may **configure the appearance** flexibly (such as the position, color, width or height, ......) by simply adjusting the `config.yaml` file. The script can also **auto-detect chapters** and assign different colors for each one. Below shows an example:
+
+(overview of the original slide:)
+
+![](./images/before_0.PNG)
+
+(slide after running the script:)
+
+![](./images/after_0.PNG)
+
+
+
+## Getting Started
+
+(Note: the code is tested in Python 3.10 environment)
+
+1. Install Python packages
+
+   ```
+   pip install -r requirements.txt
+   ```
+2. Run script
+
+   ```
+   python run.py
+   ```
+
+3. You may check the result of `test.pptx`.
+
+4. Then you may start on your own. Edit configuration parameters in `config.yaml` and re-run
+
+   ```
+   vim config.yaml
+   ```
+
+   ```
+   python run.py
+   ```
+
+
+
+
+## Some design facts
+
 1. Prefer YAML over JSON for config file (*implemented in v2.3*):
 
    * YAML looks cleaner
 
-   * YAML may add comment, which is more user-friendly for config adjustments
+   * YAML may add comment, which is more user-friendly for configuration adjustments
 
 2. Use of design pattern
 
@@ -49,4 +94,4 @@
 
    ```
 
-4. Input validation in constructor while input anti-overwrite in builder
+4. Input validation in constructor while input anti-overwrite check in builder (not implemented)
