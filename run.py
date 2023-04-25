@@ -23,11 +23,13 @@ if __name__ == '__main__':
         .setColors(config['progress_bar']['finished_part']['colors']) \
         .setBgColor(config['progress_bar']['unfinished_part']['color']) \
         .setBgThicknessRatio(config['progress_bar']['unfinished_part']['relative_thickness_ratio']) \
+        .setAddCaption(config['progress_bar']['finished_part']['add_caption']) \
         .build()
         # TODO: add more configurable params
         # .setPageMarginXY(0.15, 0.25) \
         # .setChapterBarShape('rounded_rectangle')
         # .setIfAddText(True)
+        # .setIfDetectChapter(False)
 
 
     # Clear all progress bars

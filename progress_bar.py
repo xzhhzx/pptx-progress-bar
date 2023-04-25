@@ -55,6 +55,7 @@ class ProgressBarTemplate(object):
         self.chapter_tuple_list = builder.chapter_tuple_list
         self.chapter_start_pages = [i[0] for i in self.chapter_tuple_list]
         self.num_pages_of_chapters = [i[0] - i[1] for i in zip(self.chapter_start_pages[1:], self.chapter_start_pages[:-1])]
+        self.add_caption = builder.add_caption
 
         # Presentation properties
         self.prs = builder.prs
@@ -62,8 +63,8 @@ class ProgressBarTemplate(object):
         self.H = builder.H
 
 
-    def _appendRect(self, shapes, offset, delta):
-        """ Append a foreground rectangle to the progress bar """
+    def _appendRect(self, shapes, offset, delta, caption):
+        """ Append a foreground rectangle (indicates finished pages) to the progress bar """
         if self.position in ['bottom', 'top']:
             rect = shapes.add_shape(
                 MSO_SHAPE.RECTANGLE,
@@ -72,6 +73,17 @@ class ProgressBarTemplate(object):
                 delta,
                 self.thk
             )
+
+            text_box = shapes.add_textbox(
+                offset,
+                (self.H - self.thk *2) if self.position == 'bottom' else self.thk,
+                delta,
+                self.thk
+            )
+            text_box.text_frame.text = caption
+            text_box.text_frame.paragraphs[0].font.size = 304800 / 2    # font=12
+            # text_box.text_frame.fit_text()
+
         elif self.position in ['right', 'left']:
             rect = shapes.add_shape(
                 MSO_SHAPE.RECTANGLE,
@@ -80,11 +92,24 @@ class ProgressBarTemplate(object):
                 self.thk,
                 delta
             )
+
+            text_box = shapes.add_textbox(
+                (self.W - self.thk *2) if self.position == 'right' else self.thk,
+                offset,
+                self.thk,
+                delta
+            )
+
+            # Convert caption to vertical
+            vertical_caption = ''.join([i+j for i,j in list(zip(caption, ['\v'] * len(caption)))])
+            text_box.text_frame.text = vertical_caption
+            text_box.text_frame.paragraphs[0].font.size = 304800 / 2    # font=12
+
         self._fillPureColor(rect, self.chapterColorsManager)
         return rect
 
     def _appendRectBg(self, shapes, offset, delta):
-        """ Append a background rectangle to the progress bar
+        """ Append a background rectangle (indicates unfinished pages) to the progress bar
             (although this is a duplicate of _appendRect, I think in this way
             the code logic looks cleaner)
         """
@@ -126,14 +151,16 @@ class ProgressBarTemplate(object):
         # 1.Previous full chapters
         while self.chapter_tuple_list[ptr+1][0] < page:
             delta = self.unit_size * self.num_pages_of_chapters[ptr]
-            self._appendRect(group_shape.shapes, offset, delta)
+            caption = self.chapter_tuple_list[ptr][1] if self.add_caption == True else ''
+            self._appendRect(group_shape.shapes, offset, delta, caption)
             offset += delta
             ptr += 1
 
         # 2.Current chapter
         delta_pages = page - self.chapter_tuple_list[ptr][0]
         delta = self.unit_size * delta_pages
-        self._appendRect(group_shape.shapes, offset, delta)
+        caption = self.chapter_tuple_list[ptr][1] if self.add_caption == True else ''
+        self._appendRect(group_shape.shapes, offset, delta, caption)
         offset += delta
 
         # 3.Remaining all pages
@@ -177,17 +204,18 @@ class ProgressBarTemplate(object):
             self.bg_thickness_ratio = 0.5
             self.chapterColorsManager = ColorsManager(["540d6e", "ee4266", "ffd23f", "3bceac"])
             self.chapterColorsManagerBg = ColorsManager(["D8E1E9"])
+            self.add_caption = False
 
         def _calculateChapterSegments(self):
             """ Pre-calculate all chapter segments. The first and last element
                 represents the start/end of the whole presentation.
                 FORMAT: each tuple represents (<chapter_page_index>, <chapter_name>)
             """
-            chapter_tuple_list = [(0, "start")] # (start page)
+            chapter_tuple_list = [(0, '')] # (start page)
             for idx, slide in enumerate(self.prs.slides):
                 if slide.slide_layout.name == CHAPTER_SLIDE_LAYOUT_NAME:
                     chapter_tuple_list.append((idx, slide.shapes[0].text))
-            chapter_tuple_list.append((len(self.prs.slides), "end")) # (end_page)
+            chapter_tuple_list.append((len(self.prs.slides), 'length')) # (end_page)
             return chapter_tuple_list
 
         def _checkNone(self, attr):
@@ -218,6 +246,10 @@ class ProgressBarTemplate(object):
 
         def setBgColor(self, bg_color):
             self.chapterColorsManagerBg = ColorsManager([bg_color])
+            return self
+
+        def setAddCaption(self, add_caption):
+            self.add_caption = add_caption
             return self
 
         def build(self):

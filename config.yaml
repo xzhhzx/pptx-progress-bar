@@ -4,7 +4,7 @@ progress_bar:
   finished_part:
     thickness: 0.25   # the thickness of the progress bar in inches
     colors: [540d6e, ee4266, ffd23f, 3bceac]  # available colors for each chapter segment
+    add_caption: True   # whether add caption to each chapter of the bar
   unfinished_part:
     relative_thickness_ratio: 0.6587    # ratio relative to finished_part.thickness (should be > 0)
     color: e9edc9   # color for unfinished part on the progress bar
-  text: {}
